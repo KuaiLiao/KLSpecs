@@ -31,6 +31,10 @@ Pod::Spec.new do |s|
 	s.swift_versions = ['5']
   
 	s.module_name = s.name
+
+	s.pod_target_xcconfig = {
+      'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'COLLECTIONS_SINGLE_MODULE',
+    }
   
 	s.subspec 'InternalCollectionsUtilities' do |ss|
 	  ss.source_files = 'Sources/InternalCollectionsUtilities/**/*.swift'
