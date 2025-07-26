@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
 	s.author           = { 'Apple' => 'Apple' }
 	s.source           = { :git => 'https://github.com/apple/swift-collections.git', :tag => s.version.to_s }
   
-	s.ios.deployment_target = '12.0'
+	s.ios.deployment_target = '10.0'
 	s.swift_versions = ['5']
   
 	s.module_name = s.name
