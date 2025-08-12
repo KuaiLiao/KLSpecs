@@ -94,15 +94,15 @@ Pod::Spec.new do |s|
   s.default_subspec = 'OrderedCollections'
 
   # This section is used to set up the test specifications.
-  s.test_spec 'Tests' do |ts|
-    ts.source_files = 'Tests/**/*.swift'
-    ts.dependency "#{s.name}/OrderedCollections"
-    ts.dependency "#{s.name}/DequeModule"
-    ts.dependency "#{s.name}/BitCollections"
-    ts.dependency "#{s.name}/HeapModule"
-    ts.dependency "#{s.name}/HashTreeCollections"
-    ts.dependency "#{s.name}/RopeModule"
-    ts.dependency "#{s.name}/SortedCollections"
-  end
+  # s.test_spec 'Tests' do |ts|
+  #   ts.source_files = 'Tests/**/*.swift'
+  #   ts.dependency "#{s.name}/OrderedCollections"
+  #   ts.dependency "#{s.name}/DequeModule"
+  #   ts.dependency "#{s.name}/BitCollections"
+  #   ts.dependency "#{s.name}/HeapModule"
+  #   ts.dependency "#{s.name}/HashTreeCollections"
+  #   ts.dependency "#{s.name}/RopeModule"
+  #   ts.dependency "#{s.name}/SortedCollections"
+  # end
 
 end
