@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   s.module_name = s.name
   s.header_dir = './'
 
-  s.default_subspec = 'All'
+  s.default_subspec = 'UIKit'
   s.subspec 'All' do |ss|
     ss.dependency 'BlocksKit/Core'
     ss.dependency 'BlocksKit/DynamicDelegate'
