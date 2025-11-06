@@ -9,7 +9,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SwiftCollections'
-  s.version          = '1.2.1'
+  s.version          = '1.3.0'
   s.summary          = 'Swift Collections is an open-source package of data structure implementations for the Swift.'
 
   # This description is used to generate tags and improve search results.
