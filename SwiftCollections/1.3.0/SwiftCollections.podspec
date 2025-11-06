@@ -39,6 +39,7 @@ Pod::Spec.new do |s|
   # add macro: COLLECTIONS_SINGLE_MODULE
   s.pod_target_xcconfig = {
     'SWIFT_ACTIVE_COMPILATION_CONDITIONS' => 'COLLECTIONS_SINGLE_MODULE',
+    'OTHER_SWIFT_FLAGS' => '-enable-experimental-feature NoncopyableGenerics -enable-experimental-feature Lifetimes',
   }
 
   s.subspec 'InternalCollectionsUtilities' do |ss|
