@@ -23,3 +23,7 @@ fork repo specs
 
 - [x] SwiftCollections
   > 苹果[repo](https://github.com/apple/swift-collections)中 `InternalCollectionsUtilities`直接以subspec存在会出现编译错误，提的修复[MR](https://github.com/apple/swift-collections/pull/501)已合并，等待发布新版本。一种解决办法是让 `InternalCollectionsUtilities` 以独立`pod`形式存在并依赖。
+  >
+  > 其他SwiftCollections Cocoapods版本：
+  > - [https://github.com/Danie1s/swift-collections-podspec](https://github.com/Danie1s/swift-collections-podspec)
+  > - [https://github.com/SwiftyLab/swift-collections](https://github.com/SwiftyLab/swift-collections)
