@@ -17,6 +17,7 @@ fork repo specs
 | Bifrost | 添加通过`Proxy`进行事件分发功能 | 2.0.2 |
 | OpusKit | 纯fork，无改动，仅调整`source url` | 1.5.2 |
 | SwiftCollections | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.3.0 |
+| FWPopupView | 1. 替换废弃的`SnapKit`语法<br>2. `left`改为`leading`，`right`改为`trailing` | 4.2.2.1 |
 
 
 ## TODO
