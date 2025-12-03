@@ -11,7 +11,7 @@ fork repo specs
 | YYModel | 添加扩展 | 1.0.4.1 |
 | YYText | 合并`YYText`原始`repo`中各位社区朋友提供的`Fix MR` | 1.0.7.1 |
 | CombineCocoa | 无代码改动，仅修改`podspec`，Fix 在未开启`use_framework`的项目中混编报错问题 | 0.4.1.1 |
-| RPStackable | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.0 |
+| RPStackable | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.1 |
 | SDWebImageWebPCoder | 支持`webp`图片的拉伸 | 0.14.6.1 |
 | BRPickerView | 暴漏私有属性 | 2.9.7.1 |
 | Bifrost | 添加通过`Proxy`进行事件分发功能 | 2.0.2 |
