@@ -19,7 +19,7 @@ fork repo specs
 | SwiftCollections | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.3.0 |
 | FWPopupView | 1. 替换废弃的`SnapKit`语法<br>2. `left`改为`leading`，`right`改为`trailing` | 4.2.2.1 |
 | Builders | 支持`Cocoapods` | 0.10.0 |
-| ZDLibffi | 无代码改动 | 0.352.0 |
+| ZDLibffi | `libffi v3.5.2`添加`Cocoapods`支持 | 0.352.1 |
 
 
 ## TODO
