@@ -5,7 +5,7 @@ fork repo specs
 
 | Repo | Change | Version |
 | --- | --- | --- |
-| Masonry | 添加`UILayoutGuide`、`SafeArea`支持 | 1.2.3 |
+| Masonry | 1.添加`UILayoutGuide`、`SafeArea`支持 <br>2. 新增`equalToSuperview` | 1.2.3_1 |
 | SnapKit | 把废弃方法拆分到`Deprecated` subspecies中，且默认不引用 | 5.7.1.2 |
 | RPStackable | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
 | BlocksKit | 1. 删除苹果弃用的类扩展<br>2. 默认`subspec`改为`UIKit` | 2.2.6.1 |
