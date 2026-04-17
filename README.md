@@ -5,7 +5,7 @@ fork repo specs
 
 | Repo | Change | Version |
 | --- | --- | --- |
-| [Masonry](https://github.com/KuaiLiao/Masonry) | 1.添加`UILayoutGuide`、`SafeArea`支持 <br>2. 新增`equalToSuperview` | 1.2.4 |
+| [Masonry](https://github.com/KuaiLiao/Masonry) | 1.添加`UILayoutGuide`、`SafeArea`支持 <br>2. 新增`equalToSuperview` | 1.2.5 |
 | [SnapKit](https://github.com/KuaiLiao/SnapKit) | 把废弃方法拆分到`Deprecated` subspecies中，且默认不引用 | 5.7.1.2 |
 | [RPStackable](https://github.com/KuaiLiao/Stackable) | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
 | [ZDTinyLayout](https://github.com/faimin/ZDTinyLayout) | `AutoLayout`语法糖 | 0.0.2 |
