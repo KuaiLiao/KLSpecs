@@ -22,6 +22,8 @@ fork repo specs
 | [FWPopupView](https://github.com/KuaiLiao/FWPopupView) | 1. 替换废弃的`SnapKit`语法<br>2. `left`改为`leading`，`right`改为`trailing` | 4.2.2.1 |
 | [Builders](https://github.com/davdroman/swift-builders) | 支持`Cocoapods` | 0.10.0 |
 | [ZDLibffi](https://github.com/faimin/ZDLibffi) | `libffi v3.5.2`添加`Cocoapods`支持 | 0.352.1 |
+| [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | 添加`Cocoapods`支持 | 0.2.0 |
+
 
 
 ## TODO
