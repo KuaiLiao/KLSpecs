@@ -13,6 +13,7 @@ fork repo specs
 | [YYModel](https://github.com/KuaiLiao/YYModel) | 添加扩展 | 1.0.4.4 |
 | [YYText](https://github.com/KuaiLiao/YYText) | 1.合并`YYText`原始`repo`中各位社区朋友提供的`Fix MR` <br>2. Fix: compile error | 1.0.7.2 |
 | [YYImage](https://github.com/KuaiLiao/YYImage) | 1.处理警告 <br>2.废弃方法 <br>3.提升最低支持版本 | 1.0.4.1 |
+| [YYCache](https://github.com/KuaiLiao/YYCache) | 1.SPM <br>2.Fix crash | 1.0.5 |
 | [CombineCocoa](https://github.com/KuaiLiao/CombineCocoa) | 无代码改动，仅修改`podspec`，Fix 在未开启`use_framework`的项目中混编报错问题 | 0.4.1.1 |
 | [SDWebImageWebPCoder](https://github.com/KuaiLiao/SDWebImageWebPCoder) | 支持`webp`图片的拉伸 | 0.14.6.1 |
 | [BRPickerView](https://github.com/KuaiLiao/BRPickerView) | 暴漏私有属性 | 2.9.7.1 |
