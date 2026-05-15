@@ -37,7 +37,6 @@ fork repo specs
 
 | Repo | Change | Version |
 | --- | --- | --- |
-| [OpusKit(Deprecated)](https://github.com/Phonebooth/OpusKit) | 纯fork，无改动，仅调整`source url` | 1.5.2 |
 | [OpusKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (1.5.2) |
 | [OpusFileKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (0.12) |
 | [OggKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (1.3.5) |
