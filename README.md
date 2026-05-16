@@ -1,5 +1,5 @@
 # KLSpecs
-fork repo specs
+our or fork repo specs
 
 ## Repos
 
@@ -28,6 +28,8 @@ fork repo specs
 | [Builders](https://github.com/davdroman/swift-builders) | 支持`Cocoapods` | 0.10.0 |
 | [SwiftCollections](https://github.com/apple/swift-collections) | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.3.0 |
 | [RPStackable](https://github.com/KuaiLiao/Stackable) | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
+| [amrnb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
+| [amrwb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
 | [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | 添加`Cocoapods`支持 | 0.2.0 |
 
 
@@ -45,9 +47,9 @@ fork repo specs
 
 | Repo | Change | Version |
 | --- | --- | --- |
-| [OpusKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (1.5.2) |
-| [OpusFileKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (0.12) |
-| [OggKit](https://github.com/Saafo/opus-builder/releases/) | 支持Cocoapods | 0.1.0 (1.3.5) |
+| [OpusKit](https://github.com/Saafo/opus-builder/releases/) | - | 0.1.0 (1.5.2) |
+| [OpusFileKit](https://github.com/Saafo/opus-builder/releases/) | - | 0.1.0 (0.12) |
+| [OggKit](https://github.com/Saafo/opus-builder/releases/) | - | 0.1.0 (1.3.5) |
 
 
 ## TODO
