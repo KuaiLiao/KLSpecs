@@ -3,6 +3,16 @@ fork repo specs
 
 ## Repos
 
+### Self
+
+| Repo | Change | Version |
+| --- | --- | --- |
+| [ZDMediator](https://github.com/faimin/ZDMediator) | 组件解耦通信中间件 | 0.4.4 |
+| [ZDFlexLayoutKit](https://github.com/faimin/ZDFlexLayoutKit) | Flex布局 | 0.4.1 |
+| [ZDTinyLayout](https://github.com/faimin/ZDTinyLayout) | `AutoLayout`语法糖 | 0.0.2 |
+| [ZDLibffi](https://github.com/faimin/ZDLibffi) | `libffi v3.5.2`添加`Cocoapods`支持 | 0.352.1 |
+| [ZDFfiHook](https://github.com/faimin/ZDFfiHook) | 使用`libffi`进行hook | 0.0.2 |
+
 ### Custom
 
 | Repo | Change | Version |
@@ -18,8 +28,6 @@ fork repo specs
 | [Builders](https://github.com/davdroman/swift-builders) | 支持`Cocoapods` | 0.10.0 |
 | [SwiftCollections](https://github.com/apple/swift-collections) | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.3.0 |
 | [RPStackable](https://github.com/KuaiLiao/Stackable) | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
-| [ZDTinyLayout](https://github.com/faimin/ZDTinyLayout) | `AutoLayout`语法糖 | 0.0.2 |
-| [ZDLibffi](https://github.com/faimin/ZDLibffi) | `libffi v3.5.2`添加`Cocoapods`支持 | 0.352.1 |
 | [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | 添加`Cocoapods`支持 | 0.2.0 |
 
 
