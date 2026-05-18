@@ -10,5 +10,15 @@ Pod::Spec.new do |s|
   }
   s.swift_version         = '5.0'
   s.ios.deployment_target = '12.0'
+  s.prepare_command       = <<-CMD
+    set -e
+
+    [ -d darwin-static ] || exit 0
+
+    find darwin-static -type f -path '*/Headers/opus/opusfile.h' -print | while IFS= read -r header
+    do
+      perl -0pi -e 's|#\\s*include\\s*<opusKit/opus_multistream\\.h>|# include <opus/opus_multistream.h>|g; s|#\\s*include\\s*<opus_multistream\\.h>|# include <opus/opus_multistream.h>|g' "$header"
+    done
+  CMD
   s.vendored_frameworks   = 'darwin-static/lib/darwin/libopusfile-0.12.xcframework'
 end
