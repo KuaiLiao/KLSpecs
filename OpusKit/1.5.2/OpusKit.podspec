@@ -13,6 +13,6 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '12.0'
   s.vendored_frameworks   = 'OpusKit.xcframework'
 
-  #s.deprecated_in_favor_of = '0.1.0'
-  #s.deprecated = true
+  s.deprecated_in_favor_of = '0.1.0'
+  s.deprecated = true
 end
