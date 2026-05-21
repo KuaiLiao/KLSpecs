@@ -30,7 +30,7 @@ our or fork repo specs
 | [RPStackable](https://github.com/KuaiLiao/Stackable) | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
 | [amrnb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
 | [amrwb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
-| [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | 添加`Cocoapods`支持 | 0.2.0 |
+| [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | - | 0.2.2 |
 
 
 ### YY Family
