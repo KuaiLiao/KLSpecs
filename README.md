@@ -26,7 +26,7 @@ our or fork repo specs
 | [Bifrost](https://github.com/KuaiLiao/Bifrost) | 添加通过`Proxy`进行事件分发功能 | 2.0.2 |
 | [FWPopupView](https://github.com/KuaiLiao/FWPopupView) | 1. 替换废弃的`SnapKit`语法<br>2. `left`改为`leading`，`right`改为`trailing` | 4.2.2.1 |
 | [Builders](https://github.com/davdroman/swift-builders) | 支持`Cocoapods` | 0.10.0 |
-| [SwiftCollections](https://github.com/apple/swift-collections) | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.3.0 |
+| [SwiftCollections](https://github.com/apple/swift-collections) | 为官方[repo](https://github.com/apple/swift-collections)添加`Cocoapods`支持 | 1.5.1 |
 | [RPStackable](https://github.com/KuaiLiao/Stackable) | 1.支持`ViewBuilder`<br>2.新增`API` | 0.2.3 |
 | [amrnb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
 | [amrwb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
