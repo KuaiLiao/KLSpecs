@@ -31,6 +31,8 @@ our or fork repo specs
 | [amrnb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
 | [amrwb](https://github.com/KuaiLiao/opencore-amr-iOS) | - | 0.1.6 |
 | [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | - | 0.2.2 |
+| [Diagnostics](https://github.com/AvdLee/Diagnostics) | 允许用户轻松共享诊断信息给支持团队 | 7.0.0 |
+| [ExceptionCatcher](https://github.com/sindresorhus/ExceptionCatcher) | 在Swift中捕获Objective-C异常 | 2.2.0 |
 
 
 ### YY Family
