@@ -12,6 +12,8 @@ Pod::Spec.new do |s|
   s.tvos.deployment_target     = '12.0'
   s.watchos.deployment_target  = '4.0'
 
+  s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
+
   s.source_files = 'Sources/ExceptionCatcherInternal/**/*.{h,m}'
   s.public_header_files = 'Sources/ExceptionCatcherInternal/include/**/*.h'
 end

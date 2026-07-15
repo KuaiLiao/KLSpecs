@@ -34,7 +34,7 @@ import Foundation
 private class BundleFinder {}
 
 extension Foundation.Bundle {
-    nonisolated(unsafe) static let module: Bundle = {
+    static let module: Bundle = {
         let bundleName = "Diagnostics"
         let candidates = [
             Bundle.main.resourceURL,
