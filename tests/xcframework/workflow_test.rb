@@ -13,6 +13,10 @@ class WorkflowTest < Minitest::Test
     assert workflow.fetch("on").key?("workflow_call")
     assert_equal ["xcframework"], workflow.dig("on", "push", "branches")
     assert_equal "xcode-27", workflow.dig("jobs", "build", "runs-on")
+    assert_equal "ios", workflow.dig("on", "workflow_dispatch", "inputs", "platforms", "default")
+    assert_equal "ios", workflow.dig("on", "workflow_call", "inputs", "platforms", "default")
+    assert_includes workflow.dig("jobs", "plan", "steps").map { |step| step["run"] }.compact.join("\n"), "--platforms"
+    assert_includes workflow.dig("jobs", "plan", "steps").map { |step| step["env"] }.compact.join("\n"), "BUILD_PLATFORMS"
     assert_includes workflow.dig("jobs", "build", "if"), "has_tasks"
     refute workflow.dig("jobs", "build", "strategy", "fail-fast")
     release = workflow.dig("jobs", "release")
@@ -26,6 +30,8 @@ class WorkflowTest < Minitest::Test
     assert_equal ["main"], workflow.dig("on", "push", "branches")
     assert workflow.dig("jobs", "build", "uses").end_with?("/build-xcframeworks.yml@xcframework")
     assert_includes workflow.dig("jobs", "build", "with", "revision"), "revision"
+    assert_equal "ios", workflow.dig("on", "workflow_dispatch", "inputs", "platforms", "default")
+    assert_includes workflow.dig("jobs", "build", "with").keys, "platforms"
     text = File.read(File.join(ROOT, "docs/xcframework/sync-main.yml"))
     refute_match(/\bgh\s+(api|release|workflow|run)/, text)
     refute_includes text, "createWorkflowDispatch"

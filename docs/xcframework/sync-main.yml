@@ -14,6 +14,11 @@ name: Sync specs and build XCFrameworks
         description: "Comma-separated pod names; empty rebuilds all latest source pods"
         type: string
         default: ""
+      platforms:
+        description: "Build scope: iOS device/simulator by default, or all declared platforms"
+        type: choice
+        options: [ios, all]
+        default: ios
 
 permissions:
   contents: write
@@ -73,4 +78,5 @@ jobs:
       revision: ${{ needs.sync.outputs.revision }}
       base: ${{ needs.sync.outputs.base }}
       pods: ${{ inputs.pods || '' }}
+      platforms: ${{ inputs.platforms || 'ios' }}
     secrets: inherit

@@ -27,7 +27,9 @@ module XCFramework
       preferred = platform == "watchos" && sdk == "watchos" ? %w[arm64 arm64_32] : (sdk.end_with?("simulator") || sdk == "macosx" ? %w[arm64 x86_64] : %w[arm64])
       archs = preferred & target.fetch("Archs")
       raise ArgumentError, "No supported architectures for #{sdk}" if archs.empty?
-      {"minimum" => [Pod::Version.new(declared), Pod::Version.new(target.fetch("MinimumDeploymentTarget"))].max.to_s, "architectures" => archs}
+      labels = archs.map { |arch| sdk.end_with?("simulator") && arch == "arm64" ? "arm64_sim" : arch }
+      {"minimum" => [Pod::Version.new(declared), Pod::Version.new(target.fetch("MinimumDeploymentTarget"))].max.to_s,
+       "architectures" => archs, "architecture_labels" => labels}
     end
 
     def self.podfile(task, platform, minimum, root, dependencies)
@@ -86,11 +88,12 @@ module XCFramework
       FileUtils.rm_rf(@work)
       FileUtils.mkdir_p([@work, @logs, @output, File.join(@staging, "Metadata"), File.join(@staging, "Licenses")])
       @catalog = Catalog.new(root)
-      current = @catalog.tasks(names: [task.fetch("name")]).find { |t| t["id"] == task["id"] }
+      current = @catalog.tasks(names: [task.fetch("name")], platforms: plan.fetch("platform_scope", "ios")).find { |t| t["id"] == task["id"] }
       raise ArgumentError, "Stale or altered build plan" unless current && current["fingerprint"] == task["fingerprint"]
       sha = @catalog.git("rev-parse", "HEAD").strip
       raise ArgumentError, "Plan checkout does not match HEAD" unless sha == plan.fetch("repository_commit")
-      @metadata = task.merge("repository_commit" => sha, "validated" => false, "slices" => [], "sources" => {})
+      @metadata = task.merge("platform_scope" => plan.fetch("platform_scope", "ios"), "repository_commit" => sha,
+                             "validated" => false, "slices" => [], "sources" => {})
     end
 
     def run(*args, chdir: @root)
@@ -107,7 +110,13 @@ module XCFramework
           status = wait.value
         end
       end
-      raise "Command failed (#{status.exitstatus}); #{log}\n#{text.lines.last(35).join}" unless status.success?
+      unless status.success?
+        # Archive errors often occur long before Xcode's final cleanup output.
+        # Keep the full log on disk, but surface diagnostics in the CI console.
+        diagnostics = text.lines.grep(/\b(?:error|fatal):/i).uniq.first(15)
+        summary = (diagnostics + text.lines.last(35)).uniq.map { |line| line.chomp[0, 1500] }.join("\n")
+        raise "Command failed (#{status.exitstatus}); #{log}\n#{summary}"
+      end
       text
     end
 

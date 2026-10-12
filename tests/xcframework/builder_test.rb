@@ -22,8 +22,32 @@ class BuilderTest < Minitest::Test
     info = builder_class.sdk_configuration("ios", "iphoneos", "7.0", {"SupportedTargets" => {"iphoneos" => target}})
     assert_equal "15.0", info.fetch("minimum")
     assert_equal ["arm64"], info.fetch("architectures")
+    assert_equal ["arm64"], info.fetch("architecture_labels")
+    simulator = builder_class.sdk_configuration("ios", "iphonesimulator", "7.0", {"SupportedTargets" => {"iphonesimulator" => {"MinimumDeploymentTarget" => "15.0", "Archs" => %w[arm64 x86_64]}}})
+    assert_equal %w[arm64 x86_64], simulator.fetch("architectures")
+    assert_equal %w[arm64_sim x86_64], simulator.fetch("architecture_labels")
     info = builder_class.sdk_configuration("ios", "iphoneos", "16.0", {"SupportedTargets" => {"iphoneos" => target}})
     assert_equal "16.0", info.fetch("minimum")
+  end
+
+  def test_builder_revalidates_against_the_plan_platform_scope
+    task = {"id" => "MacOnly-1.0", "name" => "MacOnly", "fingerprint" => "fingerprint"}
+    plan = {"platform_scope" => "all", "repository_commit" => "abcdef"}
+    requested = nil
+    catalog = Object.new
+    catalog.define_singleton_method(:tasks) do |names:, platforms:|
+      requested = [names, platforms]
+      [task]
+    end
+    catalog.define_singleton_method(:git) { |*_args| "abcdef\n" }
+
+    Dir.mktmpdir do |root|
+      XCFramework::Catalog.stub(:new, catalog) do
+        builder_class.new(root, plan, task, File.join(root, "dist"))
+      end
+    end
+
+    assert_equal [["MacOnly"], "all"], requested
   end
 
   def test_generated_podfile_uses_external_specs_and_not_path_install
@@ -120,6 +144,20 @@ class BuilderTest < Minitest::Test
     text = builder_class.podfile(task, "ios", "15", "/repo", deps)
     assert_includes text, 'pod "B", :podspec => "/repo/B.podspec"'
     assert_includes text, 'pod "B/Extra", :podspec => "/repo/B.podspec"'
+  end
+
+  def test_failed_command_exposes_compiler_diagnostics_before_long_archive_tail
+    Dir.mktmpdir do |root|
+      builder = builder_class.allocate
+      builder.instance_variable_set(:@root, root)
+      builder.instance_variable_set(:@logs, root)
+      script = "puts 'Sources/View.m:12:3: error: unavailable on tvOS'; 80.times { |i| puts \"Archive progress \#{i}\" }; exit 65"
+      error = assert_raises(RuntimeError) { builder.run(RbConfig.ruby, "-e", script) }
+      assert_includes error.message, "error: unavailable on tvOS"
+      assert_includes error.message, "Archive progress 79"
+      assert_includes error.message, "Command failed (65)"
+      assert_includes File.read(Dir.glob(File.join(root, "*.log")).first), "Archive progress 0"
+    end
   end
 
 end

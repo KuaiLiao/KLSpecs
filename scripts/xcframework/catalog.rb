@@ -124,7 +124,16 @@ module XCFramework
       grouped.values.each { |record| record["requested"].sort!; record["subspecs"].sort! }.sort_by { |record| record["name"] }
     end
 
-    def tasks(names: nil)
+    def normalize_platform_scope(scope)
+      values = Array(scope).flat_map { |value| value.to_s.split(",") }.map(&:strip).reject(&:empty?).uniq
+      raise ArgumentError, "platform scope must be ios or all" if values.empty?
+      return PLATFORMS if values == ["all"]
+      raise ArgumentError, "platform scope must be ios or all" unless values == ["ios"]
+      ["ios"]
+    end
+
+    def tasks(names: nil, platforms: "ios")
+      platform_scope = normalize_platform_scope(platforms)
       selected_names = names ? names : entries.keys
       entries.keys.sort.filter_map do |name|
         next unless selected_names.include?(name)
@@ -132,9 +141,11 @@ module XCFramework
         spec = entry.fetch("spec")
         source = spec.source.transform_keys(&:to_s)
         next unless source["git"]
-        platforms = spec.attributes_hash.fetch("platforms", {}).transform_values { |v| v || "0" }
-        raise ArgumentError, "#{name}: explicit platforms required" if platforms.empty?
-        raise ArgumentError, "#{name}: unknown platforms #{platforms.keys - PLATFORMS}" unless (platforms.keys - PLATFORMS).empty?
+        declared_platforms = spec.attributes_hash.fetch("platforms", {}).transform_values { |v| v || "0" }
+        raise ArgumentError, "#{name}: explicit platforms required" if declared_platforms.empty?
+        raise ArgumentError, "#{name}: unknown platforms #{declared_platforms.keys - PLATFORMS}" unless (declared_platforms.keys - PLATFORMS).empty?
+        platforms = declared_platforms.select { |platform, _| platform_scope.include?(platform) }
+        next if platforms.empty?
         local = platforms.keys.flat_map { |platform| local_dependencies(name, platform) }.uniq { |dependency| dependency["name"] }.sort_by { |dependency| dependency["name"] }
         task = {"id" => "#{name}-#{spec.version}".gsub(/[^A-Za-z0-9_.-]/, "_"), "name" => name, "version" => spec.version.to_s,
                 "path" => entry["path"], "spec_sha256" => entry["sha256"], "source" => source,
@@ -145,15 +156,16 @@ module XCFramework
       end
     end
 
-    def plan(base: nil, names: [])
+    def plan(base: nil, names: [], platforms: "ios")
+      platform_scope = normalize_platform_scope(platforms)
       unknown = names - entries.keys
       raise ArgumentError, "Unknown pods: #{unknown.join(', ')}" unless unknown.empty?
-      current = tasks(names: names.empty? ? nil : names)
+      current = tasks(names: names.empty? ? nil : names, platforms: platforms)
       if base && !base.empty? && base !~ /\A0+\z/
         changed = git("diff", "--name-only", base, "HEAD").lines.map(&:strip)
         unless changed.any? { |path| path.match?(TOOLING_PATTERN) }
           begin
-            previous = Catalog.new(root, ref: base).tasks.to_h { |task| [task["name"], task["fingerprint"]] }
+            previous = Catalog.new(root, ref: base).tasks(platforms: platforms).to_h { |task| [task["name"], task["fingerprint"]] }
             current = current.reject { |task| previous[task["name"]] == task["fingerprint"] }
           rescue StandardError => error
             warn "Historical catalog cannot be compared; rebuilding current selections: #{error.message}"
@@ -161,7 +173,18 @@ module XCFramework
           end
         end
       end
-      {"schema" => 1, "tasks" => current, "skipped" => entries.filter_map { |name, e| {"name" => name, "version" => e["spec"].version.to_s, "reason" => "latest source is not git"} unless e["spec"].source.keys.any? { |k| k.to_s == "git" } }}
+      skipped = entries.filter_map do |name, entry|
+        spec = entry.fetch("spec")
+        source = spec.source
+        unless source.keys.any? { |key| key.to_s == "git" }
+          {"name" => name, "version" => spec.version.to_s, "reason" => "latest source is not git"}
+        else
+          declared = spec.attributes_hash.fetch("platforms", {}).keys.map(&:to_s)
+          next unless (declared & platform_scope).empty?
+          {"name" => name, "version" => spec.version.to_s, "reason" => "podspec does not declare #{platform_scope.join(', ')}"}
+        end
+      end
+      {"schema" => 1, "platform_scope" => (platform_scope == PLATFORMS ? "all" : "ios"), "tasks" => current, "skipped" => skipped}
     end
   end
 end

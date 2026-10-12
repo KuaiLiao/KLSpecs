@@ -1,11 +1,13 @@
 # 最新源码 Pod → XCFramework → GitHub Release
 
+> 部署状态（2026-10-12）：`xcframework` 构建分支和 main 监听桥已推送。首次全量 Actions 已运行，20 个 Git Pod 中 17 个成功、3 个因源码平台兼容性失败；Release 按全批成功门禁跳过。详见 `validation.md`，不能把部署成功等同于全部产物已发布。
+
 ## 1. 已实现的范围
 
 - 工作分支是 `xcframework`，不修改原始 podspec，不把构建脚本合并到 main。
 - 对每个 root Pod 按 CocoaPods 的 `Pod::Version` 选取最高版本，再判断来源；只有 `source.git` 生成任务。
 - 最新版本是 `source.http` 时直接跳过，**不会退回旧的 Git 版本**。
-- 仅构建 podspec 明确声明的 `ios/osx/tvos/watchos/visionos`；支持移动平台的 device/simulator 切片，不额外添加 Catalyst 或未声明平台。
+- 默认平台范围是 `ios`：只处理 podspec 声明 iOS 的 Pod，构建 iOS 真机和模拟器。通过 `--platforms all` 或 Actions 的 `platforms: all` 可恢复按 podspec 声明的平台构建；不会额外添加 Catalyst 或未声明平台。
 - 每个 Pod 一个矩阵任务；每个平台单独使用 CocoaPods 创建项目、执行 `prepare_command`、构建静态 framework，最后合并为一个 XCFramework。
 - 使用 `softprops/action-gh-release@v3` 创建 Release 和上传附件，整个流程没有 `gh` 命令。
 - 不需要个人访问令牌/PAT。创建 Release、向 xcframework 推送同步提交仍需要 Actions 自动提供的 `GITHUB_TOKEN` 和相应的 `contents: write` 权限，不能无授权写入仓库。
@@ -18,14 +20,14 @@
 
 官方参考：`actions/runner-images` 的 `images/macos/xcode-27-arm64-Readme.md` 和公告 #14404。不要把宿主 macOS 版本和 Xcode 自带的 macOS SDK 版本混为一谈。
 
-实际 deployment target 是 `max(podspec 最低版本, 本仓库依赖最低版本, 当前 SDK 支持下限)`。声明值和实际值都写入元数据。Xcode 27 下不能把 iOS 15 构建的产物宣传为仍支持 iOS 7；消费方以 manifest 的实际最低版本为准。SDK 架构同样从 `SDKSettings.json` 读取，不硬塞不支持的架构。
+实际 deployment target 是 `max(podspec 最低版本, 本仓库依赖最低版本, 当前 SDK 支持下限)`。声明值和实际值都写入元数据。Xcode 27 下不能把 iOS 15 构建的产物宣传为仍支持 iOS 7；消费方以 manifest 的实际最低版本为准。SDK 架构同样从 `SDKSettings.json` 读取，不硬塞不支持的架构。默认 iOS 范围下，真机为 `arm64`；模拟器为实际 `arm64 + x86_64`，其中 arm64 模拟器在元数据中标记为 `arm64_sim`。`arm64_sim` 是平台/切片标签，不是 `lipo -archs` 单独返回的 Mach-O 架构名。
 
 ## 2. 文件职责
 
 | 文件 | 作用 |
 | --- | --- |
 | `.github/workflows/build-xcframeworks.yml` | xcframework 推送 / 手动 / reusable 构建、验证、发布 |
-| `docs/xcframework/sync-main.yml` | **需要安装在 main** 的轻量监听桥接模板 |
+| `docs/xcframework/sync-main.yml` | main 轻量监听桥接模板（已安装） |
 | `scripts/xcframework/catalog.rb`、`plan.rb` | 最高版本选择、平台及本仓库依赖分析、增量指纹、固定构建计划 |
 | `scripts/xcframework/builder.rb`、`build.rb` | Git ref 固定为提交、CocoaPods 安装、archive、验证、ZIP 打包 |
 | `scripts/xcframework/artifacts.rb`、`aggregate.rb` | 批次完整性、ZIP / SHA256 / 内外元数据校验和 Release 说明 |
@@ -36,7 +38,25 @@
 
 BlocksKit 默认选择 UIKit，但根 spec 同时声明 macOS/watchOS。配置中只对这两个平台明确选择 `Core` 与 `DynamicDelegate`；这不增加平台，也不修改原 podspec。其他 Pod 默认使用其默认 subspec，而不是强制构建所有可选 subspec。
 
-## 3. 首次部署（尚未替你执行）
+## 3. 平台范围与运行方式
+
+默认构建 iOS：
+
+```sh
+bundle exec ruby scripts/xcframework/plan.rb --platforms ios --output build-plan.json
+```
+
+如需保留所有 podspec 声明的平台：
+
+```sh
+bundle exec ruby scripts/xcframework/plan.rb --platforms all --output build-plan.json
+```
+
+GitHub Actions 的手动运行入口和 main 同步入口都有 `platforms` 参数，默认值为 `ios`，可选 `all`。计划中的 `platform_scope`、每个任务的 `platforms`、实际架构和 `architecture_labels` 会写入元数据。
+
+## 4. 首次部署
+
+> 当前状态（2026-10-12）：`xcframework` 构建分支和 main 监听桥已经推送。下面命令保留给新仓库安装场景；当前仓库不需要重复安装。
 
 ### 第一步：提交并推送 xcframework
 
@@ -75,7 +95,7 @@ git push origin main
 
 直接手动运行 xcframework workflow 的入口是否可见取决于默认分支登记情况，因此建议统一使用安装在 main 的桥接手动入口。
 
-## 4. 后续更新如何自动执行
+## 5. 后续更新如何自动执行
 
 ```text
 main 新增/修改/删除 podspec
@@ -104,7 +124,7 @@ main 新增/修改/删除 podspec
 - 每批使用 `xcframeworks-<run_id>-<run_attempt>` 新标签，不覆盖原附件，也不替换仓库默认 Latest Release。增量 Release 只含本批发生变化的 Pod，不是全仓库所有 Pod 的快照。
 - 如果 source 使用可变 branch/tag 而 podspec 文件本身没更新，不会因为远端 Git 变化自动触发；需要更新 spec 或手动重建。
 
-## 5. 产物结构与集成注意事项
+## 6. 产物结构与集成注意事项
 
 ```text
 <Pod>-<Version>.xcframework.zip
@@ -128,7 +148,7 @@ main 新增/修改/删除 podspec
 
 验证包含 archive 成功、所需架构、module map、Swift interface、逐架构 Swift import typecheck、XCFramework 切片及 ZIP 完整性。不等同于完整消费应用链接、启动和功能测试；上游兼容性仍需要消费方验收。
 
-## 6. 本地执行和排错
+## 7. 本地执行和排错
 
 需要 Ruby 3.3、Xcode 27 和网络访问。所有命令都通过 Bundler 使用锁定版本：
 
@@ -146,6 +166,6 @@ bundle exec ruby scripts/xcframework/aggregate.rb --plan build-plan.json --input
 
 原始 podspec 和 `prepare_command` 是可执行代码，本 workflow 只面向受信任仓库提交，不接收外部 PR/fork 的不受信任构建输入。
 
-## 7. 验收边界
+## 8. 验收边界
 
-本地分支和文件创建不等于远端部署。需要完成上面的两个提交/推送步骤后，自动监听和 Release 上传才生效。详见 `docs/xcframework/validation.md` 的实际验证记录；所有 Pod 的 GitHub 完整矩阵尚需首次运行验收。
+构建分支和 main 监听桥已经部署；首次 GitHub 完整矩阵中 17/20 成功。Diagnostics、Masonry、SDWebImageWebPCoder 的源码平台兼容性错误仍阻止全量 Release，具体日志和修复边界见 `docs/xcframework/validation.md`。发布权限、附件上传以及消费方的链接/运行尚需单独验收，不能凭自动测试通过声称全部交付完成。

@@ -18,6 +18,11 @@ name: Build latest source XCFrameworks
         description: "Comma-separated pod names; empty rebuilds all latest source pods"
         type: string
         default: ""
+      platforms:
+        description: "Build scope: iOS device/simulator by default, or all declared platforms"
+        type: choice
+        options: [ios, all]
+        default: ios
   workflow_call:
     inputs:
       revision:
@@ -31,6 +36,10 @@ name: Build latest source XCFrameworks
       pods:
         type: string
         default: ""
+      platforms:
+        description: "Build scope: ios or all"
+        type: string
+        default: ios
 
 permissions:
   contents: read
@@ -74,9 +83,10 @@ jobs:
         env:
           BUILD_BASE: ${{ inputs.revision && inputs.base || (github.event_name == 'push' && github.ref == 'refs/heads/xcframework' && github.event.before) || '' }}
           BUILD_PODS: ${{ inputs.pods || '' }}
+          BUILD_PLATFORMS: ${{ inputs.platforms || 'ios' }}
         run: |
           bundle exec ruby scripts/xcframework/plan.rb \
-            --base "$BUILD_BASE" --pods "$BUILD_PODS" --output build-plan.json
+            --base "$BUILD_BASE" --pods "$BUILD_PODS" --platforms "$BUILD_PLATFORMS" --output build-plan.json
       - uses: actions/upload-artifact@v7
         with:
           name: build-plan

@@ -60,13 +60,36 @@ class CatalogTest < Minitest::Test
     git("rev-parse", "HEAD")
   end
 
-  def test_numeric_latest_and_declared_platforms_only
+  def test_numeric_latest_and_declared_platforms_only_in_all_scope
     spec("A", "1.9", platforms: {"ios" => "12"})
     spec("A", "1.10", platforms: {"osx" => "10.15", "visionos" => "1.0"})
-    task = catalog.plan.fetch("tasks").first
+    task = catalog.plan(platforms: "all").fetch("tasks").first
     assert_equal "1.10", task.fetch("version")
     assert_equal %w[osx visionos], task.fetch("platforms").keys.sort
     assert_equal "v1.10", task.fetch("source").fetch("tag")
+  end
+
+  def test_default_scope_only_plans_pods_declaring_ios
+    spec("MacOnly", "1", platforms: {"osx" => "10.15"})
+    spec("Mixed", "1", platforms: {"ios" => "15", "osx" => "12"})
+    result = catalog.plan
+    assert_equal "ios", result.fetch("platform_scope")
+    assert_equal ["Mixed"], result.fetch("tasks").map { |task| task.fetch("name") }
+    assert_equal ["MacOnly"], result.fetch("skipped").map { |entry| entry.fetch("name") }
+    assert_equal ["ios"], result.fetch("tasks").first.fetch("platforms").keys
+  end
+
+  def test_all_scope_keeps_non_ios_pods_available
+    spec("MacOnly", "1", platforms: {"osx" => "10.15"})
+    result = catalog.plan(platforms: "all")
+    assert_equal "all", result.fetch("platform_scope")
+    assert_equal ["MacOnly"], result.fetch("tasks").map { |task| task.fetch("name") }
+  end
+
+  def test_invalid_platform_scope_is_rejected
+    spec("A", "1")
+    assert_raises(ArgumentError) { catalog.plan(platforms: "android") }
+    assert_raises(ArgumentError) { catalog.plan(platforms: "") }
   end
 
   def test_latest_http_does_not_fall_back_to_old_git

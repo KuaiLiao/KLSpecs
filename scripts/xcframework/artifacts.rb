@@ -38,8 +38,9 @@ module XCFramework
       notes = <<~TEXT
         # Latest Git-sourced XCFrameworks
 
-        Spec checkout: `#{plan.fetch('repository_commit')}`. Each ZIP contains one pod, not its dependency binaries.
-        Only declared platforms are built. SDK deployment floors may raise the minimum OS version; the **effective** minimums are listed below and in each package's Metadata/build-info.json.
+        Spec checkout: `#{plan.fetch('repository_commit')}`. Build scope: `#{plan.fetch('platform_scope', 'ios')}`. Each ZIP contains one pod, not its dependency binaries.
+        In the default `ios` scope, device uses arm64 and simulator uses arm64_sim (actual Mach-O arm64 simulator slice) plus x86_64 when supported.
+        Only declared platforms in the selected scope are built. SDK deployment floors may raise the minimum OS version; the **effective** minimums are listed below and in each package's Metadata/build-info.json.
 
         | Pod | Version | Effective platform minimums |
         | --- | --- | --- |
