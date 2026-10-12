@@ -72,6 +72,6 @@
 - All files above.
 
 - [x] Review the diff for accidental podspec or generated-artifact changes.
-- [ ] Commit the implementation on `xcframework`.
-- [ ] Push the branch without using `gh`.
-- [ ] Verify the pushed commit and workflow YAML through repository checks/API where available.
+- [x] Commit the implementation on `xcframework`.
+- [x] Push the branch without using `gh`.
+- [x] Verify the pushed commit and workflow YAML through repository checks/API where available.

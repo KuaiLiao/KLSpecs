@@ -1,6 +1,6 @@
 # 最新源码 Pod → XCFramework → GitHub Release
 
-> 部署状态（2026-10-12）：`xcframework` 构建分支和 main 监听桥已推送。首次全量 Actions 已运行，20 个 Git Pod 中 17 个成功、3 个因源码平台兼容性失败；Release 按全批成功门禁跳过。详见 `validation.md`，不能把部署成功等同于全部产物已发布。
+> 部署状态（2026-10-12）：默认 `ios` 范围的 Actions run `38257128218` 已完成，20/20 个最新 Git Pod 成功，Release `xcframeworks-38257128218-1` 已创建。此前使用 `all` 范围的历史 run `38224786309` 有 3 个非 iOS 平台源码兼容性失败；详见 `validation.md`。
 
 ## 1. 已实现的范围
 
@@ -168,4 +168,4 @@ bundle exec ruby scripts/xcframework/aggregate.rb --plan build-plan.json --input
 
 ## 8. 验收边界
 
-构建分支和 main 监听桥已经部署；首次 GitHub 完整矩阵中 17/20 成功。Diagnostics、Masonry、SDWebImageWebPCoder 的源码平台兼容性错误仍阻止全量 Release，具体日志和修复边界见 `docs/xcframework/validation.md`。发布权限、附件上传以及消费方的链接/运行尚需单独验收，不能凭自动测试通过声称全部交付完成。
+构建分支和 main 监听桥已经部署。默认 `ios` 范围的 GitHub Actions run `38257128218` 中 20/20 个 Pod 成功，Release `xcframeworks-38257128218-1` 已创建并包含 20 个 XCFramework ZIP、manifest 和 SHA256SUMS。使用 `all` 范围时，历史 run `38224786309` 仍有 Diagnostics、Masonry、SDWebImageWebPCoder 的非 iOS 平台源码兼容性错误；具体日志和修复边界见 `docs/xcframework/validation.md`。消费方的链接/运行测试仍需按实际项目单独验收。

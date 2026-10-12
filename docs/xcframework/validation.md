@@ -4,7 +4,7 @@
 
 ## 当前本地检查
 
-- 自动测试：39 runs / 278 assertions / 0 failures / 0 errors（包含失败命令诊断回归测试）。
+- 自动测试：43 runs / 305 assertions / 0 failures / 0 errors（包含平台范围、arm64_sim 和失败命令诊断回归测试）。
 - `scripts/xcframework/*.rb`、`tests/xcframework/*_test.rb` Ruby 语法检查通过。
 - 默认 iOS 计划的模拟器切片使用 SDKSettings 支持的 `arm64` / `x86_64`，并在 metadata 中将 simulator arm64 标记为 `arm64_sim`。
 - 默认 iOS 范围规划：仅包含声明 iOS 的最新 Git Pod；不声明 iOS 的 Git Pod 会记录为 scope skip。
@@ -16,7 +16,7 @@
 
 ## 真实构建证据及边界
 
-本地 Xcode 27.0（27A266a）已完成 YYCache、ZDTinyLayout 的真实构建；首次远端 GitHub Actions 全量运行也已完成计划和矩阵验证。**这不等于全部 20 个 Pod 都能被上游源码成功编译。**
+本地 Xcode 27.0（27A266a）已完成 YYCache、ZDTinyLayout 的真实构建；远端 GitHub Actions 已完成默认 `ios` 范围的计划、矩阵、完整性校验和 Release 发布。`all` 范围的历史运行仍暴露了非 iOS 平台源码兼容性问题。
 
 | Pod | 已构建 SDK | 说明 |
 | --- | --- | --- |
@@ -25,15 +25,15 @@
 
 ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git ls-remote` 验证的 tag SHA `59039ddd1968512bb550c32d7ec0cde1b854b356`；真实 CocoaPods install、archive、校验和打包均执行。该 harness 位于忽略目录 `.tmp/validation/`，未加入生产 workflow。
 
-首次远端全量运行（2026-10-12，run `38224786309`）结果：plan 成功，20 个矩阵任务中 17 个成功；Diagnostics 7.0.0、SDWebImageWebPCoder 0.15.0.1、Masonry 1.2.5 因源码平台兼容性失败，Release 按门禁正确跳过。
+历史 `all` 范围运行（2026-10-12，run `38224786309`）结果：plan 成功，20 个矩阵任务中 17 个成功；Diagnostics 7.0.0、SDWebImageWebPCoder 0.15.0.1、Masonry 1.2.5 因源码平台兼容性失败，Release 按门禁正确跳过。随后默认 `ios` 范围运行（2026-10-12，run `38257128218`）20/20 成功，Release `xcframeworks-38257128218-1` 创建成功，包含 20 个 Pod ZIP、manifest 和 SHA256SUMS。通过公共 GitHub API 下载 manifest 验证：`platform_scope=ios`，全部 slice 均为 iOS，模拟器架构为 `arm64 + x86_64`，标签集合包含 `arm64_sim`。
 
 已在本地重现并确认根因：Masonry 在 tvOS 无条件调用 `keyboardLayoutGuide`；Diagnostics 的 tvOS 源码使用高于声明最低版本的 API 且调用 tvOS 不提供的容量属性；SDWebImageWebPCoder 的 macOS 分支调用仅在 UIKit/watchOS 条件下定义的方法。这些不是构建器可以安全隐式修复的问题，当前保持严格失败，避免发布不可用二进制。
 
 ## 已部署与未验证项
 
-- `xcframework` 分支已推送：`4769b361eef16725fe401c63efd28c011c81f4b1`。
+- `xcframework` 分支已推送：`09f9a0c9c941730e64bbc7e92a0ca7d83d5f6524`。
 - main 监听桥已推送：`21479c7`，只新增 `.github/workflows/sync-xcframeworks.yml`。
-- 首次 Actions 全量运行已真实执行；17/20 成功，3 个 Pod 失败，Release 未创建。
+- 默认 `ios` Actions 已真实执行并发布成功：20/20 成功，Release 已创建；`all` 范围的历史运行仍为 17/20，Release 未创建。
 - `actionlint` 安装因 Go proxy 网络超时失败；workflow 通过 YAML 解析与静态回归断言，**仍未通过 actionlint 验证**。
 - 官方 runner 镜像在线复核遇到网络错误/旧缓存；不能仅凭滚动 `xcode-27` 标签保证宿主始终为 macOS 26；workflow 会运行时拒绝非 Xcode 27。
 - 上传不是原子操作；当前 workflow 只有全矩阵成功才进入 `softprops/action-gh-release@v3`，并由 aggregate 校验 manifest/SHA256。
@@ -51,9 +51,7 @@ ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git
 ## 后续验收
 
 1. 分支和 main 监听桥已经部署，不必再次合并或安装。
-2. 先确认是否允许在下载的源码副本上应用按 Pod 版本限定、可审计的兼容补丁；否则需要先修复上游源码并发布新版本。当前不隐式改变第三方源代码。
-3. 默认 iOS 范围下重新执行 iOS 矩阵；如选择 `all`，再修复并验收三个失败 Pod 的非 iOS 声明平台。
-4. 如需先验收 Release 权限，可在 main 的 Actions 手动入口指定 `YYCache`，不代表全量验收通过。
-5. Release 成功后验证附件、manifest、SHA256SUMS；用消费项目进行链接与运行测试。
+2. 默认 `ios` Release、manifest、SHA256SUMS 已通过远端验证；仍需用消费项目进行链接与运行测试。
+3. 如选择 `all`，需要先修复并验收三个失败 Pod 的非 iOS 声明平台；当前不隐式改变第三方源码。
 
 具体命令、权限要求、资源和依赖集成方式见 `docs/xcframework/README.md`。
