@@ -16,7 +16,7 @@
 
 按“优先 Xcode 27”的要求，构建 job 使用 `runs-on: xcode-27`，并检查 `xcodebuild -version` 确实是 27，不静默降级到 Xcode 26。
 
-`xcode-27` 是滚动镜像标签，不是固定的 macOS 26 版本锁。本次在线复核遇到网络故障和旧缓存，无法确认当前宿主系统版本；**不能保证 macOS 26 + Xcode 27 始终同时满足**。最终以 Actions 的 Set up job 镜像记录为准。如果必须同时固定这个组合，应提供经过验证的自托管 runner，并相应替换 `runs-on`。本方案按你的最终优先级先保证 Xcode 27。
+截至 2026-10-12，GitHub 官方镜像清单中的 `xcode-27` 是滚动的 Xcode 27 arm64 镜像，当前基准系统为 macOS 27；公开的 `macos-26` arm64 镜像当前列出的 Xcode 版本为 26.6。由于你的最终要求是“优先 Xcode 27”，workflow 使用 `runs-on: xcode-27` 并在 job 内拒绝非 Xcode 27。若必须严格锁定 macOS 26 + Xcode 27，需要提供已验证的自托管或自定义镜像 runner，并替换 `runs-on`。
 
 官方参考：`actions/runner-images` 的 `images/macos/xcode-27-arm64-Readme.md` 和公告 #14404。不要把宿主 macOS 版本和 Xcode 自带的 macOS SDK 版本混为一谈。
 

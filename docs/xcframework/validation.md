@@ -35,7 +35,7 @@ ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git
 - main 监听桥已推送：`21479c7`，只新增 `.github/workflows/sync-xcframeworks.yml`。
 - 默认 `ios` Actions 已真实执行并发布成功：20/20 成功，Release 已创建；`all` 范围的历史运行仍为 17/20，Release 未创建。
 - `actionlint` 安装因 Go proxy 网络超时失败；workflow 通过 YAML 解析与静态回归断言，**仍未通过 actionlint 验证**。
-- 官方 runner 镜像在线复核遇到网络错误/旧缓存；不能仅凭滚动 `xcode-27` 标签保证宿主始终为 macOS 26；workflow 会运行时拒绝非 Xcode 27。
+- 截至 2026-10-12，官方 `xcode-27` 镜像当前基准系统为 macOS 27，而公开 `macos-26` 镜像列出的 Xcode 为 26.6；由于优先 Xcode 27，workflow 使用 `xcode-27` 并运行时拒绝非 Xcode 27。严格的 macOS 26 + Xcode 27 组合需自托管或自定义镜像。
 - 上传不是原子操作；当前 workflow 只有全矩阵成功才进入 `softprops/action-gh-release@v3`，并由 aggregate 校验 manifest/SHA256。
 
 ## 失败 Pod 的定位证据
