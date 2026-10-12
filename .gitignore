@@ -44,3 +44,10 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 .DS_Store
 .tmp/
+
+# XCFramework CI outputs
+logs/
+dist/
+build-plan.json
+vendor/bundle/
+.bundle/
