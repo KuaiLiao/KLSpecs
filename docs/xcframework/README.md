@@ -16,7 +16,7 @@
 
 按“优先 Xcode 27”的要求，构建 job 使用 `runs-on: xcode-27`，并检查 `xcodebuild -version` 确实是 27，不静默降级到 Xcode 26。
 
-截至 2026-10-12，GitHub 官方镜像清单中的 `xcode-27` 是滚动的 Xcode 27 arm64 镜像，当前基准系统为 macOS 27；公开的 `macos-26` arm64 镜像当前列出的 Xcode 版本为 26.6。由于你的最终要求是“优先 Xcode 27”，workflow 使用 `runs-on: xcode-27` 并在 job 内拒绝非 Xcode 27。若必须严格锁定 macOS 26 + Xcode 27，需要提供已验证的自托管或自定义镜像 runner，并替换 `runs-on`。
+`xcode-27` 是滚动镜像标签，不是固定的 macOS 26 版本锁。本次无法可靠获取官方镜像清单，因此不声明当前宿主系统的具体版本。远端 run `38257128218` 已通过 Xcode 27 运行时检查；宿主 macOS 版本仍须以该 run 的 Set up job 日志为准。若必须严格锁定 macOS 26 + Xcode 27，需要提供经过验证的 runner 并替换 `runs-on`。本方案按你的最终优先级先保证 Xcode 27。
 
 官方参考：`actions/runner-images` 的 `images/macos/xcode-27-arm64-Readme.md` 和公告 #14404。不要把宿主 macOS 版本和 Xcode 自带的 macOS SDK 版本混为一谈。
 
@@ -52,7 +52,7 @@ bundle exec ruby scripts/xcframework/plan.rb --platforms ios --output build-plan
 bundle exec ruby scripts/xcframework/plan.rb --platforms all --output build-plan.json
 ```
 
-GitHub Actions 的手动运行入口和 main 同步入口都有 `platforms` 参数，默认值为 `ios`，可选 `all`。计划中的 `platform_scope`、每个任务的 `platforms`、实际架构和 `architecture_labels` 会写入元数据。
+`xcframework` 分支的构建 workflow 和 main 监听桥模板 `docs/xcframework/sync-main.yml` 都新增了 `platforms` 参数，默认值为 `ios`，可选 `all`。当前 main 已安装的监听桥尚未同步这个新增输入，但自动调用 reusable workflow 时会采用其默认 `ios` 范围；如需在 main 的手动 Actions 入口选择 `all`，需将更新后的模板同步到 main 的 `.github/workflows/sync-xcframeworks.yml`。计划中的 `platform_scope`、每个任务的 `platforms`、实际架构和 `architecture_labels` 会写入元数据。
 
 ## 4. 首次部署
 

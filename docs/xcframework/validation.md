@@ -32,10 +32,10 @@ ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git
 ## 已部署与未验证项
 
 - `xcframework` 分支已推送：`09f9a0c9c941730e64bbc7e92a0ca7d83d5f6524`。
-- main 监听桥已推送：`21479c7`，只新增 `.github/workflows/sync-xcframeworks.yml`。
+- main 监听桥已推送：`21479c7`，只新增 `.github/workflows/sync-xcframeworks.yml`。本轮只更新了 `xcframework` 中的模板，未更改 main；自动构建使用 reusable workflow 的默认 `ios`，main 手动入口的 `all` 下拉选项需另行同步模板。
 - 默认 `ios` Actions 已真实执行并发布成功：20/20 成功，Release 已创建；`all` 范围的历史运行仍为 17/20，Release 未创建。
 - `actionlint` 安装因 Go proxy 网络超时失败；workflow 通过 YAML 解析与静态回归断言，**仍未通过 actionlint 验证**。
-- 截至 2026-10-12，官方 `xcode-27` 镜像当前基准系统为 macOS 27，而公开 `macos-26` 镜像列出的 Xcode 为 26.6；由于优先 Xcode 27，workflow 使用 `xcode-27` 并运行时拒绝非 Xcode 27。严格的 macOS 26 + Xcode 27 组合需自托管或自定义镜像。
+- 官方镜像清单访问未成功，因此不能可靠确认当前宿主 macOS 版本。`xcode-27` 标签和运行时 Xcode 27 检查已通过远端验证；严格锁定 macOS 26 + Xcode 27 仍需经过验证的 runner。
 - 上传不是原子操作；当前 workflow 只有全矩阵成功才进入 `softprops/action-gh-release@v3`，并由 aggregate 校验 manifest/SHA256。
 
 ## 失败 Pod 的定位证据
@@ -46,7 +46,7 @@ ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git
 | Diagnostics 7.0.0 / tvOS | `UpdateAvailableInsight.swift:24` 的 `region`、`AppSystemMetadataReporter.swift:105` 的 `language/languageCode` 要求 tvOS 16；`Device.swift:56` 的容量属性在 tvOS 不存在 | 需要 availability fallback 和平台适配；仅抬高最低版本不能修复容量属性 |
 | SDWebImageWebPCoder 0.15.0.1 / macOS | `SDImageWebPCoder.m:354`，no known class method for selector `animatedImageWithFrames:` | 定义位于 `SD_UIKIT || SD_WATCH` 条件内，调用却无条件；需要确认 macOS 语义再适配，不能盲目替换成返回类型不同的 SDImageCoderHelper 方法 |
 
-三个任务都通过生产 `plan.rb` / `build.rb` 本地重建定位，没有跳过编译、替换下载引用或修改原始 podspec。它们在首个错误平台停止，**后续平台尚未完整验收**。完整日志分别位于 `logs/Masonry-1.2.5/`、`logs/Diagnostics-7.0.0/`、`logs/SDWebImageWebPCoder-0.15.0.1/`；这些目录被 gitignore 忽略，不提交编译产物。
+三个任务都通过生产 `plan.rb` / `build.rb` 本地重建定位，没有跳过编译、替换下载引用或修改原始 podspec。历史 `all` 构建在首个错误平台停止，**其中后续非 iOS 平台尚未完整验收**；这三个 Pod 的 iOS slice 已在 run `38257128218` 中通过。完整日志分别位于 `logs/Masonry-1.2.5/`、`logs/Diagnostics-7.0.0/`、`logs/SDWebImageWebPCoder-0.15.0.1/`；这些目录被 gitignore 忽略，不提交编译产物。
 
 ## 后续验收
 
