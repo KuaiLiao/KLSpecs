@@ -17,11 +17,11 @@ our or fork repo specs
 
 | Repo | Change | Version |
 | --- | --- | --- |
-| [Masonry](https://github.com/KuaiLiao/Masonry) | 1. 添加`UILayoutGuide`、`SafeArea`支持 <br>2. 新增`equalToSuperview` | 1.2.5 |
+| [Masonry](https://github.com/KuaiLiao/Masonry) | 1. 添加`UILayoutGuide`、`SafeArea`支持 <br>2. 新增`equalToSuperview` | 1.2.6 |
 | [SnapKit](https://github.com/KuaiLiao/SnapKit) | 把废弃方法拆分到`Deprecated` subspecies中，且默认不引用 | 5.7.1.2 |
 | [BlocksKit](https://github.com/KuaiLiao/BlocksKit) | 1. 删除苹果弃用的类扩展<br>2. 默认`subspec`改为`UIKit` | 2.2.6.1 |
 | [CombineCocoa](https://github.com/KuaiLiao/CombineCocoa) | 无代码改动，仅修改`podspec`，Fix 在未开启`use_framework`的项目中混编报错问题 | 0.4.1.1 |
-| [SDWebImageWebPCoder](https://github.com/KuaiLiao/SDWebImageWebPCoder) | 支持`webp`图片的拉伸 | 0.15.0.1 |
+| [SDWebImageWebPCoder](https://github.com/KuaiLiao/SDWebImageWebPCoder) | 支持`webp`图片的拉伸 | 0.15.0.2 |
 | [BRPickerView](https://github.com/KuaiLiao/BRPickerView) | 暴漏私有属性 | 3.0.0.1 |
 | [Bifrost](https://github.com/KuaiLiao/Bifrost) | 添加通过`Proxy`进行事件分发功能 | 2.0.2 |
 | [FWPopupView](https://github.com/KuaiLiao/FWPopupView) | 1. 替换废弃的`SnapKit`语法<br>2. `left`改为`leading`，`right`改为`trailing` | 4.2.2.1 |
