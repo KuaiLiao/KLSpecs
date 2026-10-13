@@ -35,7 +35,7 @@ ZDTinyLayout 的 GitHub 网络不稳定，集成 harness 使用此前已由 `git
 - main 监听桥已推送：`21479c7`，只新增 `.github/workflows/sync-xcframeworks.yml`。本轮只更新了 `xcframework` 中的模板，未更改 main；自动构建使用 reusable workflow 的默认 `ios`，main 手动入口的 `all` 下拉选项需另行同步模板。
 - 默认 `ios` Actions 已真实执行并发布成功：20/20 成功，Release 已创建；`all` 范围的历史运行仍为 17/20，Release 未创建。
 - `actionlint` 安装因 Go proxy 网络超时失败；workflow 通过 YAML 解析与静态回归断言，**仍未通过 actionlint 验证**。
-- 官方镜像清单访问未成功，因此不能可靠确认当前宿主 macOS 版本。`xcode-27` 标签和运行时 Xcode 27 检查已通过远端验证；严格锁定 macOS 26 + Xcode 27 仍需经过验证的 runner。
+- 构建 job 使用 GitHub Actions 官方当前可用的 `xcode-27` runner；macOS 版本跟随该 runner 的最新兼容版本，不要求固定为 macOS 26。`xcodebuild -version` 的 Xcode 27 检查已通过远端验证。
 - 上传不是原子操作；当前 workflow 只有全矩阵成功才进入 `softprops/action-gh-release@v3`，并由 aggregate 校验 manifest/SHA256。
 
 ## 失败 Pod 的定位证据
