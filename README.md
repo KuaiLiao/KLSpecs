@@ -33,6 +33,7 @@ our or fork repo specs
 | [LookInsideServer](https://github.com/LookInsideApp/LookInside-Release) | - | 0.2.2 |
 | [Diagnostics](https://github.com/AvdLee/Diagnostics) | 允许用户轻松共享诊断信息给支持团队 | 7.0.0 |
 | [ExceptionCatcher](https://github.com/sindresorhus/ExceptionCatcher) | 在Swift中捕获Objective-C异常 | 2.2.0 |
+| [DebugSwift](https://github.com/DebugSwift/DebugSwift) | 开发调试工具 | 1.19.0 |
 
 
 ### YY Family
