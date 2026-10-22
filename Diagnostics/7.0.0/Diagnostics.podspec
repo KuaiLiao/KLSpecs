@@ -10,6 +10,7 @@ Pod::Spec.new do |s|
   # 平台支持 (与 Package.swift 保持一致)
   s.ios.deployment_target = '16.0'
   s.macos.deployment_target = '13.0'
+  s.tvos.deployment_target = '14.0'
   s.watchos.deployment_target = '6.0'
 
   s.swift_versions = ['5.9', '6.0']
