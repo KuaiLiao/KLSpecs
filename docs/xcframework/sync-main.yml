@@ -1,0 +1,82 @@
+# Install this file as .github/workflows/sync-xcframeworks.yml on MAIN.
+# Push the xcframework branch first; the reusable workflow must exist remotely.
+name: Sync specs and build XCFrameworks
+
+"on":
+  push:
+    branches: [main]
+    paths:
+      - "**/*.podspec"
+      - "**/*.podspec.json"
+  workflow_dispatch:
+    inputs:
+      pods:
+        description: "Comma-separated pod names; empty rebuilds all latest source pods"
+        type: string
+        default: ""
+      platforms:
+        description: "Build scope: iOS device/simulator by default, or all declared platforms"
+        type: choice
+        options: [ios, all]
+        default: ios
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xcframework-main-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      revision: ${{ steps.sync.outputs.revision }}
+      base: ${{ steps.sync.outputs.base }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: xcframework
+          fetch-depth: 0
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Mirror only spec files from the latest main snapshot
+        id: sync
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/main
+          # Old queued events or reruns must never roll specs back to old main.
+          SOURCE_SHA=$(git rev-parse origin/main)
+          BASE=$(git rev-parse HEAD)
+          ruby scripts/xcframework/sync.rb "$SOURCE_SHA"
+          git add --all
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m "ci: sync podspecs from main ${SOURCE_SHA:0:12}"
+            git push origin HEAD:xcframework
+          fi
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            echo 'base=' >> "$GITHUB_OUTPUT"
+          else
+            echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          fi
+
+  # GITHUB_TOKEN pushes do not trigger push workflows. Calling the reusable
+  # workflow directly also avoids workflow_dispatch's default-branch caveat.
+  build:
+    needs: sync
+    uses: KuaiLiao/KLSpecs/.github/workflows/build-xcframeworks.yml@xcframework
+    with:
+      revision: ${{ needs.sync.outputs.revision }}
+      base: ${{ needs.sync.outputs.base }}
+      pods: ${{ inputs.pods || '' }}
+      platforms: ${{ inputs.platforms || 'ios' }}
+    secrets: inherit

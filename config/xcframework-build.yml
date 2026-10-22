@@ -1,0 +1,7 @@
+# Only override subspecs where the root's default is incompatible with its platform.
+# Never add a platform that the root podspec does not declare.
+pods:
+  BlocksKit:
+    subspecs:
+      osx: [Core, DynamicDelegate]
+      watchos: [Core, DynamicDelegate]

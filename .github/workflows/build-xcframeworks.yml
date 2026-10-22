@@ -1,0 +1,185 @@
+name: Build latest source XCFrameworks
+
+"on":
+  push:
+    branches: [xcframework]
+    paths:
+      - "**/*.podspec"
+      - "**/*.podspec.json"
+      - "scripts/xcframework/**"
+      - "tests/xcframework/**"
+      - "config/xcframework-build.yml"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - ".github/workflows/build-xcframeworks.yml"
+  workflow_dispatch:
+    inputs:
+      pods:
+        description: "Comma-separated pod names; empty rebuilds all latest source pods"
+        type: string
+        default: ""
+      platforms:
+        description: "Build scope: iOS device/simulator by default, or all declared platforms"
+        type: choice
+        options: [ios, all]
+        default: ios
+  workflow_call:
+    inputs:
+      revision:
+        description: "Exact synchronized xcframework commit"
+        required: true
+        type: string
+      base:
+        description: "Previous xcframework commit; empty performs full build"
+        type: string
+        default: ""
+      pods:
+        type: string
+        default: ""
+      platforms:
+        description: "Build scope: ios or all"
+        type: string
+        default: ios
+
+permissions:
+  contents: read
+
+# Distinct from the caller's sync group: sharing a group would deadlock/cancel it.
+concurrency:
+  group: xcframework-build
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: inputs.revision != '' || github.ref == 'refs/heads/xcframework'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_tasks: ${{ steps.plan.outputs.has_tasks }}
+      revision: ${{ steps.revision.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.revision || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify branch ancestry
+        id: revision
+        env:
+          REQUESTED_REVISION: ${{ inputs.revision || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$REQUESTED_REVISION" =~ ^[0-9a-f]{40}$ ]]
+          git merge-base --is-ancestor "$REQUESTED_REVISION" origin/xcframework
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - name: Unit tests
+        run: bundle exec ruby -Itests -e 'Dir["tests/xcframework/*_test.rb"].sort.each { |f| require_relative f }'
+      - name: Generate fixed build plan
+        id: plan
+        env:
+          BUILD_BASE: ${{ inputs.revision && inputs.base || (github.event_name == 'push' && github.ref == 'refs/heads/xcframework' && github.event.before) || '' }}
+          BUILD_PODS: ${{ inputs.pods || '' }}
+          BUILD_PLATFORMS: ${{ inputs.platforms || 'ios' }}
+        run: |
+          bundle exec ruby scripts/xcframework/plan.rb \
+            --base "$BUILD_BASE" --pods "$BUILD_PODS" --platforms "$BUILD_PLATFORMS" --output build-plan.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build-plan
+          path: build-plan.json
+          if-no-files-found: error
+
+  build:
+    needs: plan
+    if: needs.plan.outputs.has_tasks == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.plan.outputs.revision }}
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: build-plan
+          path: .
+      - name: Verify Xcode 27
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          xcodebuild -version | grep -E '^Xcode 27([.]|$)'
+          xcodebuild -showsdks
+      - name: Build, validate imports and package declared platforms
+        env:
+          TASK_ID: ${{ matrix.id }}
+        run: |
+          bundle exec ruby scripts/xcframework/build.rb \
+            --plan build-plan.json --task "$TASK_ID" --output dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: xcframework-${{ matrix.id }}
+          path: dist/
+          if-no-files-found: error
+          compression-level: 0
+      - name: Keep build logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: logs-${{ matrix.id }}
+          path: logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  release:
+    needs: [plan, build]
+    if: needs.plan.outputs.has_tasks == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.plan.outputs.revision }}
+          persist-credentials: false
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - uses: actions/download-artifact@v8
+        with:
+          name: build-plan
+          path: .
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: xcframework-*
+          path: dist
+          merge-multiple: true
+      - name: Verify complete batch, checksums and embedded metadata
+        run: bundle exec ruby scripts/xcframework/aggregate.rb --plan build-plan.json --input dist
+      - name: Create Release and upload attachments
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ github.token }}
+          tag_name: xcframeworks-${{ github.run_id }}-${{ github.run_attempt }}
+          target_commitish: ${{ needs.plan.outputs.revision }}
+          name: XCFrameworks ${{ github.run_id }}.${{ github.run_attempt }}
+          body_path: dist/release-notes.md
+          make_latest: "false"
+          fail_on_unmatched_files: true
+          overwrite_files: false
+          files: |
+            dist/*.xcframework.zip
+            dist/manifest.json
+            dist/SHA256SUMS
