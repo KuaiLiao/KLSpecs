@@ -4,13 +4,13 @@
 
 ## 1. 已实现的范围
 
-- 工作分支是 `xcframework`，不修改原始 podspec，不把构建脚本合并到 main。
+- 构建脚本和 workflow 已合入 `main`；直接构建 main 的确切提交，不再依赖已删除的 `xcframework` 分支，也不修改原始 podspec。
 - 对每个 root Pod 按 CocoaPods 的 `Pod::Version` 选取最高版本，再判断来源；只有 `source.git` 生成任务。
 - 最新版本是 `source.http` 时直接跳过，**不会退回旧的 Git 版本**。
 - 默认平台范围是 `ios`：只处理 podspec 声明 iOS 的 Pod，构建 iOS 真机和模拟器。通过 `--platforms all` 或 Actions 的 `platforms: all` 可恢复按 podspec 声明的平台构建；不会额外添加 Catalyst 或未声明平台。
 - 每个 Pod 一个矩阵任务；每个平台单独使用 CocoaPods 创建项目、执行 `prepare_command`、构建静态 framework，最后合并为一个 XCFramework。
 - 使用 `softprops/action-gh-release@v3` 创建 Release 和上传附件，整个流程没有 `gh` 命令。
-- 不需要个人访问令牌/PAT。创建 Release、向 xcframework 推送同步提交仍需要 Actions 自动提供的 `GITHUB_TOKEN` 和相应的 `contents: write` 权限，不能无授权写入仓库。
+- 不需要个人访问令牌/PAT。创建 Release 使用 Actions 自动提供的 `GITHUB_TOKEN` 和相应的 `contents: write` 权限，不再生成或推送同步提交。
 
 ### Xcode 与最低系统版本
 
@@ -26,12 +26,13 @@
 
 | 文件 | 作用 |
 | --- | --- |
-| `.github/workflows/build-xcframeworks.yml` | xcframework 推送 / 手动 / reusable 构建、验证、发布 |
-| `docs/xcframework/sync-main.yml` | main 轻量监听桥接模板（已安装） |
+| `.github/workflows/sync-xcframeworks.yml` | main 推送 / 手动入口，调用同提交的 reusable workflow |
+| `.github/workflows/build-xcframeworks.yml` | 手动 / reusable 构建、验证、发布；不单独监听 push，避免重复构建 |
+| `docs/xcframework/sync-main.yml` | 与 main 入口一致的部署模板 |
 | `scripts/xcframework/catalog.rb`、`plan.rb` | 最高版本选择、平台及本仓库依赖分析、增量指纹、固定构建计划 |
 | `scripts/xcframework/builder.rb`、`build.rb` | Git ref 固定为提交、CocoaPods 安装、archive、验证、ZIP 打包 |
 | `scripts/xcframework/artifacts.rb`、`aggregate.rb` | 批次完整性、ZIP / SHA256 / 内外元数据校验和 Release 说明 |
-| `scripts/xcframework/sync.rb` | 从 main 镜像 podspec，包含新增、修改和删除；保留构建脚本 |
+| `scripts/xcframework/sync.rb` | 保留的历史分支镜像工具；当前 CI 不调用 |
 | `config/xcframework-build.yml` | 必要的平台 subspec 选择覆盖 |
 | `tests/xcframework/` | 规划、构建配置、资源、同步和发布校验回归测试 |
 | `Gemfile`、`Gemfile.lock` | 固定 Ruby 依赖，支持 macOS ARM 与 Linux |
@@ -52,73 +53,66 @@ bundle exec ruby scripts/xcframework/plan.rb --platforms ios --output build-plan
 bundle exec ruby scripts/xcframework/plan.rb --platforms all --output build-plan.json
 ```
 
-`xcframework` 分支的构建 workflow 和 main 监听桥模板 `docs/xcframework/sync-main.yml` 都新增了 `platforms` 参数，默认值为 `ios`，可选 `all`。当前 main 已安装的监听桥尚未同步这个新增输入，但自动调用 reusable workflow 时会采用其默认 `ios` 范围；如需在 main 的手动 Actions 入口选择 `all`，需将更新后的模板同步到 main 的 `.github/workflows/sync-xcframeworks.yml`。计划中的 `platform_scope`、每个任务的 `platforms`、实际架构和 `architecture_labels` 会写入元数据。
+main 入口、构建 workflow 和模板 `docs/xcframework/sync-main.yml` 均支持 `platforms` 参数，默认值为 `ios`，可选 `all`。计划中的 `platform_scope`、每个任务的 `platforms`、实际架构和 `architecture_labels` 会写入元数据。
 
 ## 4. 首次部署
 
-> 当前状态（2026-10-12）：`xcframework` 构建分支和 main 监听桥已经推送。下面命令保留给新仓库安装场景；当前仓库不需要重复安装。
+> 原独立分支方案已迁移到 main。两个 workflow 必须随构建脚本一起提交；不需要重建 `xcframework` 分支。
 
-### 第一步：提交并推送 xcframework
+### 第一步：将构建文件合入 main
 
-确认当前本地分支是 `xcframework`，检查本次新增文件，然后提交、推送：
+检查构建脚本、配置、依赖、测试和两个 workflow，通过正常 PR 流程合入 main：
 
 ```sh
 git status --short --branch
 git add .gitignore .github Gemfile Gemfile.lock config docs scripts tests
-git commit -m "ci: build latest source pods into xcframework releases"
-git push -u origin xcframework
+git commit -m "ci: build xcframeworks directly from main"
 ```
 
-首次分支创建或构建脚本变更会做全量规划。`xcframework` 远程分支必须先存在，main 桥接才能引用其中的 reusable workflow。
+构建脚本变更会做全量规划。入口使用 `./.github/workflows/build-xcframeworks.yml`，与调用方使用同一个提交中的 workflow，不需要远程分支引用，也不含固定仓库名。
 
-### 第二步：在 main 安装唯一的监听 workflow
+### 第二步：保持入口与模板一致
 
-不要把 xcframework 分支整体合并到 main。可在另一个 main checkout / worktree 中，从 xcframework 提取模板：
+`.github/workflows/sync-xcframeworks.yml` 是唯一的 push 入口。修改入口时同步更新模板；新仓库可从模板安装：
 
 ```sh
-git fetch origin xcframework
 mkdir -p .github/workflows
-git show origin/xcframework:docs/xcframework/sync-main.yml > .github/workflows/sync-xcframeworks.yml
-git add .github/workflows/sync-xcframeworks.yml
-git commit -m "ci: sync podspec updates to xcframework builds"
-git push origin main
+cp docs/xcframework/sync-main.yml .github/workflows/sync-xcframeworks.yml
 ```
 
-如果 main 受保护，走正常 PR 流程。模板中的 reusable workflow 引用针对 `KuaiLiao/KLSpecs`；仓库迁移时同步修改 `jobs.build.uses`。
+不要只把调用入口复制到不包含构建 workflow 和脚本的仓库。
 
 ### 第三步：权限和第一次运行
 
 1. 仓库启用 GitHub Actions，组织策略允许使用本 workflow 中的第三方 Actions。
-2. main 桥接的同步 job 和发布 job 需要 `contents: write`。确认 Actions token 没有被组织策略限制为只读；xcframework 的分支保护必须允许同步 job 推送，否则需要调整规则，不要使用 force push 绕过。
-3. 在 Actions 页面运行 **Sync specs and build XCFrameworks**，选择 **main**：`pods` 留空做全量；填 `YYCache` 可先小批验收，填 `YYCache,SnapKit` 可做指定 Pod 重建。
+2. 入口向发布 job 授予 `contents: write`。确认 Actions token 没有被组织策略限制为只读；不需要允许 bot 推送分支。
+3. 在 Actions 页面运行 **Build XCFrameworks from main**，选择 **main**：`pods` 留空做全量；填 `YYCache` 可先小批验收，填 `YYCache,SnapKit` 可做指定 Pod 重建。
 4. 全部所选任务通过后，Release 包含 `*.xcframework.zip`、`manifest.json`、`SHA256SUMS`。
 
-直接手动运行 xcframework workflow 的入口是否可见取决于默认分支登记情况，因此建议统一使用安装在 main 的桥接手动入口。
+也可直接手动运行 **Build latest source XCFrameworks**，同样选择 main；非 main 分支会跳过构建。
 
 ## 5. 后续更新如何自动执行
 
 ```text
 main 新增/修改/删除 podspec
   → main 监听 workflow
-  → checkout xcframework
-  → 将最新 fetched main 的所有 podspec 镜像到 xcframework（保留工具）
-  → 如有变化，生成 bot 提交并推送 xcframework
-  → 直接调用 xcframework 的 reusable workflow
-  → checkout 同步后确切 SHA
+  → 直接调用同一提交中的 reusable workflow
+  → checkout 事件的确切 main SHA，并校验它属于 main 历史
+  → 使用 push 事件的 before SHA 进行增量比较（手动入口不传 base）
   → 规划变化的最新 Pod 和受本仓库依赖影响的 Pod
   → Xcode 27 分平台 archive / 校验 / 打包
   → 所选批次全部成功后 softprops 创建 Release 并上传
 ```
 
-- 用自动 `GITHUB_TOKEN` 推送后的另一个 push workflow 不会自动被触发，因此桥接 **直接调用 reusable workflow**，不依赖二次 push 触发，也不需要 PAT 或 REST dispatch。
-- 同步前验证触发 SHA 属于 main 历史；同步最新 fetched main，而不是旧事件 SHA，避免旧运行重跑导致 spec 回滚。
+- 入口直接调用同提交的 reusable workflow，不推送同步提交，也不需要 PAT 或 REST dispatch。构建 workflow 不再独立监听 push，避免同一次更新重复发布。
+- 重跑旧事件仍构建该事件的确切 SHA，不会回写或回滚仓库中的 spec；如需最新状态，手动选择 main 发起新运行。
 - 依赖分析会展开实际请求的 subspec、父级依赖、嵌套默认 subspec 和传递依赖；Podfile 会保留这些明确请求，不把 `B/Extra` 错换成 `B` 的默认功能。
 - 指定 `--pods` 时，只校验所选 root 和其依赖闭包，不被无关 Pod 的无效约束阻断。历史 catalog 无法解析或约束已失效时，放弃增量比较，保守地重建当前所选任务；当前 catalog 仍严格校验。
 - 本仓库只选择最新依赖版本；如果不能满足依赖约束，会显式失败，**不偷偷下载本仓库的旧版本依赖**。本仓库 HTTP-only 依赖也会显式失败。
 - 上游不在本仓库的依赖交给 CocoaPods 解析，结果写入 `Podfile-*.lock`；它们不是当前仓库的独立打包任务。
 - 旧版本文件修改但最高版本和依赖指纹没变，不构建。最新版本删除后重新选择当前剩余的最高版本。只有被跳过的 HTTP Pod 变化也不发布空 Release。
 - 脚本、依赖锁文件、配置、workflow 或测试变更导致全量重建。
-- 并发组串行、不中断进行中的构建；Actions 可能合并/替换等待中的运行，所以是最终最新状态同步，不承诺为每个中间版本单独发布。
+- 入口和构建并发组按确切提交区分，不替换不同提交的等待运行；多个提交可能并行构建，失败批次需使用手动全量重建补齐。push 增量比较该事件的 before/after。
 - 某个构建任务失败会阻止整批发布，其他任务继续完成并保存日志。修复后使用 main 手动入口全量或指定名称重建；不能指望之后无关 Pod 更新自动补发之前失败的 Pod。
 - Release 创建与多个附件上传不是原子操作：上传阶段网络或权限失败时可能留下附件不完整的 Release。只消费成功运行发布的批次，并核对 manifest 与 SHA256SUMS；通过仓库页面删除失败批次，再重跑生成新批次。构建失败不会进入 Release job。
 - 每批使用 `xcframeworks-<run_id>-<run_attempt>` 新标签，不覆盖原附件，也不替换仓库默认 Latest Release。增量 Release 只含本批发生变化的 Pod，不是全仓库所有 Pod 的快照。

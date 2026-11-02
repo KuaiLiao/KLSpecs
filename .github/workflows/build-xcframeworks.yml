@@ -1,17 +1,6 @@
 name: Build latest source XCFrameworks
 
 "on":
-  push:
-    branches: [xcframework]
-    paths:
-      - "**/*.podspec"
-      - "**/*.podspec.json"
-      - "scripts/xcframework/**"
-      - "tests/xcframework/**"
-      - "config/xcframework-build.yml"
-      - "Gemfile"
-      - "Gemfile.lock"
-      - ".github/workflows/build-xcframeworks.yml"
   workflow_dispatch:
     inputs:
       pods:
@@ -26,11 +15,11 @@ name: Build latest source XCFrameworks
   workflow_call:
     inputs:
       revision:
-        description: "Exact synchronized xcframework commit"
+        description: "Exact main commit to build"
         required: true
         type: string
       base:
-        description: "Previous xcframework commit; empty performs full build"
+        description: "Previous main commit; empty performs full build"
         type: string
         default: ""
       pods:
@@ -46,12 +35,12 @@ permissions:
 
 # Distinct from the caller's sync group: sharing a group would deadlock/cancel it.
 concurrency:
-  group: xcframework-build
+  group: xcframework-build-${{ inputs.revision || github.sha }}
   cancel-in-progress: false
 
 jobs:
   plan:
-    if: inputs.revision != '' || github.ref == 'refs/heads/xcframework'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -70,7 +59,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$REQUESTED_REVISION" =~ ^[0-9a-f]{40}$ ]]
-          git merge-base --is-ancestor "$REQUESTED_REVISION" origin/xcframework
+          git merge-base --is-ancestor "$REQUESTED_REVISION" origin/main
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: ruby/setup-ruby@v1
         with:
@@ -81,7 +70,7 @@ jobs:
       - name: Generate fixed build plan
         id: plan
         env:
-          BUILD_BASE: ${{ inputs.revision && inputs.base || (github.event_name == 'push' && github.ref == 'refs/heads/xcframework' && github.event.before) || '' }}
+          BUILD_BASE: ${{ inputs.base || '' }}
           BUILD_PODS: ${{ inputs.pods || '' }}
           BUILD_PLATFORMS: ${{ inputs.platforms || 'ios' }}
         run: |
